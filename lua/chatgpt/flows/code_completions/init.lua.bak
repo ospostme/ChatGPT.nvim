@@ -51,46 +51,19 @@ M.complete = function()
 
   set_loading(true)
 
-  -- Modified to use chat completions with proper DeepSeek handling
-  Api.chat_completions({
+  Api.completions({
+    -- model = "gpt-3.5-turbo-instruct",
     model = "deepseek-coder",
-    messages = {
-      {
-        role = "system",
-        content = "You are an AI programming assistant. Complete the code based on the prefix and suffix provided. Only return the code completion, no explanations or additional text.",
-      },
-      {
-        role = "user",
-        content = "Complete the following code:\n\nPrefix:\n```\n"
-          .. prefix
-          .. "\n```\n\nSuffix:\n```\n"
-          .. suffix
-          .. "\n```\n\nOnly return the code that should be inserted between prefix and suffix.",
-      },
-    },
+    prompt = prefix,
+    suffix = suffix,
     max_tokens = 1024,
     temperature = 0.2,
     top_p = 0.95,
+    -- presence_penalty = 0.6,
   }, function(answer, usage)
     set_loading(false)
-
-    -- Handle DeepSeek's response format
-    local completion_text = answer
-    if type(answer) == "table" then
-      -- Try to handle both possible response formats
-      completion_text = answer.choices and answer.choices[1].message.content or answer.text or answer
-    end
-
-    -- Clean up the response if needed
-    if type(completion_text) == "string" then
-      -- Remove markdown code blocks if present
-      completion_text = completion_text:gsub("```[%w]*\n", ""):gsub("\n```", "")
-    else
-      completion_text = ""
-    end
-
     local Popup = require("nui.popup")
-    local lines = Utils.split_string_by_line(completion_text)
+    local lines = Utils.split_string_by_line(answer)
 
     local popup = Popup({
       position = 0,
